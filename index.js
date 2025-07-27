@@ -40,6 +40,23 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, {"Content-Type": "text/plain"});
         res.end(JSON.stringify({message: "All goods below", total: goodsDb.length, data: goodsDb}));
         // res.end('Success');
+    } else if(path.startsWith("/good") && method === "GET") {
+        const id = parsedUrl.path.split('/')[2];
+        const index = goodsDb.findIndex((good => good.id === id));
+
+        if(index !== -1) {
+            // console.log(goodsDb[index]);
+            // goodsDb[index] = newGood;
+            fs.writeFile(dbPath, JSON.stringify(goodsDb), "utf-8", (err) => {
+                if(err) {
+                    res.writeHead(500, {"Content-Type": "application/json"});
+                    res.end(JSON.stringify({'error': 'Something went wrong could not find good'}));
+                } else {
+                    res.writeHead(200, {"Content-Type": "application/json"});
+                    res.end(JSON.stringify({message: "Good found successfully", data: goodsDb[index]}));
+                }
+            });
+        }
     } else if(path === "/create-goods" && method === "POST") {
         let body = "";
         req.on("data", (chunk) => {
@@ -47,9 +64,10 @@ const server = http.createServer((req, res) => {
         });
         req.on("end", () => {
             const newGood = JSON.parse(body);
+            const goodPrice = parseInt(newGood.unit.split(" ")[0]);
 
             newGood.id = uuid();
-            newGood.totalPrice = parseInt(newGood.unit.split(" ")[0]) * newGood.unitPrice;
+            newGood.totalPrice = goodPrice * newGood.unitPrice;
             console.log(newGood);
             // const goods = JSON.parse(goodsDb);
             goodsDb.push(newGood);
@@ -63,9 +81,62 @@ const server = http.createServer((req, res) => {
                 }
             });
         });
-    } else if(path === "/delete-goods" && method === "DELETE") {
+    } else if(path.startsWith("/delete-goods") && method === "DELETE") {
         let body = "";
+        const id = parsedUrl.path.split('/')[2];
+        const index = goodsDb.findIndex((good => good.id === id));
+        if(index !== -1) {
+            // console.log(goodsDb[index]);
+            goodsDb.splice(index, 1);
+            fs.writeFile(dbPath, JSON.stringify(goodsDb), "utf-8", (err) => {
+                if(err) {
+                    res.writeHead(500, {"Content-Type": "application/json"});
+                    res.end(JSON.stringify({'error': 'Something went wrong could not delete good'}));
+                } else {
+                    res.writeHead(200, {"Content-Type": "application/json"});
+                    res.end(JSON.stringify({message: "Good deleted successfully", data: goodsDb[index]}));
+                }
+            });
+        } else {
+            res.writeHead(404, {"Content-Type": "application/json"});
+            res.end(JSON.stringify({message: "Good not found"}));
+        }
+        // console.log(id);
 
+    }
+    else if(path.startsWith("/update-goods") && method === "PATCH") {
+        let body = "";
+        const id = parsedUrl.path.split('/')[2];
+
+        req.on("data", (chunk) => {
+            body += chunk;
+            // console.log(body);
+
+        });
+        req.on("end", () => {
+            const index = goodsDb.findIndex((good => good.id === id));
+
+            if(index !== -1) {
+                const newGood  = goodsDb[index];
+                const data= JSON.parse(body);
+                console.log(newGood);
+                Object.assign(newGood, data);
+                const goodPrice = parseInt(newGood.unit.split(" ")[0]);
+                newGood.totalPrice = goodPrice * newGood.unitPrice;
+
+                // console.log(goodsDb[index]);
+                goodsDb[index] = newGood;
+                fs.writeFile(dbPath, JSON.stringify(goodsDb), "utf-8", (err) => {
+                    if(err) {
+                        res.writeHead(500, {"Content-Type": "application/json"});
+                        res.end(JSON.stringify({'error': 'Something went wrong could not update good'}));
+                    } else {
+                        res.writeHead(200, {"Content-Type": "application/json"});
+                        res.end(JSON.stringify({message: "Good updated successfully", data: goodsDb[index]}));
+                    }
+                });
+            }
+        });
     } else {
         res.writeHead(404, {"Content-Type": "text/plain"});
         res.end("Not Found");
