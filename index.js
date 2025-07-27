@@ -23,34 +23,51 @@ const http = require("http");
 const fs = require("fs");
 const url = require("url");
 const uuid = require("uuid").v4;
+const goodsDb = require("./db/goods.json");
 
 const PORT = 3000;
+const dbPath = "./db/goods.json";
 
 const server = http.createServer((req, res) => {
     const parsedUrl = url.parse(req.url, true);
     const path = parsedUrl.pathname;
     const method = req.method;
 
-    if (path === "/goods" && method === "GET") {
-        const goods = JSON.parse(fs.readFile("goods.json"));
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify(goods));
-    } else if (path === "/create-goods" && method === "POST") {
+    // console.log(`${parsedUrl}, ${method}, ${path}`);
+
+    if(path === "/goods" && method === "GET") {
+        // const goods = JSON.parse(goodsDb);
+        res.writeHead(200, {"Content-Type": "text/plain"});
+        res.end(JSON.stringify({message: "All goods below", total: goodsDb.length, data: goodsDb}));
+        // res.end('Success');
+    } else if(path === "/create-goods" && method === "POST") {
         let body = "";
         req.on("data", (chunk) => {
             body += chunk;
         });
         req.on("end", () => {
             const newGood = JSON.parse(body);
+
             newGood.id = uuid();
-            const goods = JSON.parse(fs.readFile("goods.json"));
-            goods.push(newGood);
-            fs.writeFile("./goods.json", JSON.stringify(goods));
-            res.writeHead(201, { "Content-Type": "application/json" });
-            res.end(JSON.stringify(newGood));
+            newGood.totalPrice = parseInt(newGood.unit.split(" ")[0]) * newGood.unitPrice;
+            console.log(newGood);
+            // const goods = JSON.parse(goodsDb);
+            goodsDb.push(newGood);
+            fs.writeFile(dbPath, JSON.stringify(goodsDb), "utf-8", (err) => {
+                if(err) {
+                    res.writeHead(500, {"Content-Type": "application/json"});
+                    res.end(JSON.stringify({'error': 'Something went wrong could not create new good'}));
+                } else {
+                    res.writeHead(200, {"Content-Type": "application/json"});
+                    res.end(JSON.stringify({message: "New good created successfully", data: newGood}));
+                }
+            });
         });
+    } else if(path === "/delete-goods" && method === "DELETE") {
+        let body = "";
+
     } else {
-        res.writeHead(404, { "Content-Type": "text/plain" });
+        res.writeHead(404, {"Content-Type": "text/plain"});
         res.end("Not Found");
     }
 });
