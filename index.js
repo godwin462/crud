@@ -47,7 +47,7 @@ const server = http.createServer((req, res) => {
         if(index !== -1) {
             // console.log(goodsDb[index]);
             // goodsDb[index] = newGood;
-            fs.writeFile(dbPath, JSON.stringify(goodsDb), "utf-8", (err) => {
+            fs.writeFile(dbPath, JSON.stringify(goodsDb, null, 2), "utf-8", (err) => {
                 if(err) {
                     res.writeHead(500, {"Content-Type": "application/json"});
                     res.end(JSON.stringify({'error': 'Something went wrong could not find good'}));
@@ -71,7 +71,7 @@ const server = http.createServer((req, res) => {
             console.log(newGood);
             // const goods = JSON.parse(goodsDb);
             goodsDb.push(newGood);
-            fs.writeFile(dbPath, JSON.stringify(goodsDb), "utf-8", (err) => {
+            fs.writeFile(dbPath, JSON.stringify(goodsDb, null, 2), "utf-8", (err) => {
                 if(err) {
                     res.writeHead(500, {"Content-Type": "application/json"});
                     res.end(JSON.stringify({'error': 'Something went wrong could not create new good'}));
@@ -88,7 +88,7 @@ const server = http.createServer((req, res) => {
         if(index !== -1) {
             // console.log(goodsDb[index]);
             goodsDb.splice(index, 1);
-            fs.writeFile(dbPath, JSON.stringify(goodsDb), "utf-8", (err) => {
+            fs.writeFile(dbPath, JSON.stringify(goodsDb, null, 2), "utf-8", (err) => {
                 if(err) {
                     res.writeHead(500, {"Content-Type": "application/json"});
                     res.end(JSON.stringify({'error': 'Something went wrong could not delete good'}));
@@ -126,7 +126,7 @@ const server = http.createServer((req, res) => {
 
                 // console.log(goodsDb[index]);
                 goodsDb[index] = newGood;
-                fs.writeFile(dbPath, JSON.stringify(goodsDb), "utf-8", (err) => {
+                fs.writeFile(dbPath, JSON.stringify(goodsDb, null, 2), "utf-8", (err) => {
                     if(err) {
                         res.writeHead(500, {"Content-Type": "application/json"});
                         res.end(JSON.stringify({'error': 'Something went wrong could not update good'}));
